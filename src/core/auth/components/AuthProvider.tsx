@@ -1,0 +1,124 @@
+import { createContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/core/supabase/client';
+import type { UserProfile } from '@/shared/types';
+
+interface AuthState {
+  user: User | null;
+  session: Session | null;
+  profile: UserProfile | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+}
+
+interface AuthActions {
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
+}
+
+type AuthContextType = AuthState & AuthActions;
+
+export const AuthContext = createContext<AuthContextType | null>(null);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const isAuthenticated = !!session && !!user;
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    setProfile(data as UserProfile | null);
+    return data;
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      if (currentSession?.user) {
+        fetchProfile(currentSession.user.id);
+      }
+      setIsLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        if (newSession?.user) {
+          fetchProfile(newSession.user.id);
+        } else {
+          setProfile(null);
+        }
+        setIsLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [fetchProfile]);
+
+  const signInWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+  };
+
+  const updateProfile = async (data: Partial<UserProfile>) => {
+    if (!user) return;
+    const { error } = await (supabase.from('user_profiles') as any)
+      .update(data)
+      .eq('id', user.id);
+    if (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+    setProfile((prev) => prev ? { ...prev, ...data } : null);
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        isLoading,
+        isAuthenticated,
+        signInWithGoogle,
+        signOut,
+        updateProfile,
+        refreshProfile,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
