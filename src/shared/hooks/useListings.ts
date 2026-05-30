@@ -6,7 +6,7 @@ import {
 import { supabase } from '@/core/supabase/client';
 import type { BaseListing } from '@/shared/types';
 
-export interface UseListingsOptions<T> {
+export interface UseListingsOptions {
   table: string;
   filters?: Record<string, unknown>;
   search?: string;
@@ -117,7 +117,7 @@ async function fetchListingsPage<T extends BaseListing>(
 }
 
 export function useListings<T extends BaseListing>(
-  options: UseListingsOptions<T>
+  options: UseListingsOptions
 ): UseListingsReturn<T> {
   const {
     table,
@@ -147,6 +147,7 @@ export function useListings<T extends BaseListing>(
       fetchListingsPage<T>(table, pageParam, pageSize, filters, search, sortBy, sortOrder),
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 0,
+    retry: false, // Don't retry on DB errors so it fails fast instead of hanging
   });
 
   // Real-time subscription

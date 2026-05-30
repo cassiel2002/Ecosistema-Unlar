@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Heart, Flag, PawPrint, Calendar, MapPin, Users, Trash2, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -34,6 +34,7 @@ const genderLabels: Record<Rental['gender_preference'], string> = {
 export function RentalDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, profile } = useAuth();
   const { isFavorited, toggleFavorite } = useFavorites();
   const { submitReport, isSubmitting: isReporting } = useReport();
@@ -64,8 +65,12 @@ export function RentalDetailPage() {
     try {
       const { error } = await supabase.from('rentals').delete().eq('id', rental.id);
       if (error) throw error;
+      
+      // Invalidate the cache so the list updates
+      queryClient.invalidateQueries({ queryKey: ['rentals'] });
+      
       toast.success('Alquiler eliminado exitosamente');
-      navigate('/alquileres');
+      navigate('/rentals');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error al eliminar publicación');
     } finally {

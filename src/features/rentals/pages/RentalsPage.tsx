@@ -120,7 +120,7 @@ export function RentalsPage() {
         </div>
         {user && (
           <Button
-            onClick={() => navigate('/rentals/create')}
+            onClick={() => navigate('/alquileres/nuevo')}
             leftIcon={<Plus className="h-4 w-4" />}
           >
             Publicar alquiler
@@ -170,7 +170,7 @@ export function RentalsPage() {
                   rental={rental}
                   onFavorite={user ? handleFavorite : undefined}
                   isFavorited={isFavorited('rental', rental.id)}
-                  onClick={() => navigate(`/rentals/${rental.id}`)}
+                  onClick={() => navigate(`/alquileres/${rental.id}`)}
                 />
               </motion.div>
             ))}

@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/core/supabase/client';
 import { Modal } from '@/shared/ui/Modal';
-import { QUICK_LINKS } from '@/shared/constants/mockData';
 import {
   mockRentals,
   mockMarketplaceItems,
@@ -73,6 +72,7 @@ const tabs = [
   { id: 'alquileres', label: 'Alquileres', icon: Building2, route: '/alquileres', table: 'rentals', createRoute: '/alquileres/nuevo' },
   { id: 'marketplace', label: 'Compra/Venta', icon: ShoppingBag, route: '/marketplace', table: 'marketplace_items', createRoute: '/marketplace/nuevo' },
   { id: 'foro', label: 'Foro', icon: MessageSquare, route: '/foro', table: 'forum_posts', createRoute: '/foro/nuevo' },
+  { id: 'eventos', label: 'Eventos', icon: PartyPopper, route: '/eventos', table: 'events', createRoute: '/eventos/nuevo' },
   { id: 'perdidos', label: 'Perdidos', icon: SearchIcon, route: '/perdidos', table: 'lost_found_items', createRoute: '/perdidos/nuevo' },
   { id: 'servicios', label: 'Servicios', icon: Briefcase, route: '/servicios', table: 'services', createRoute: '/servicios/nuevo' },
   { id: 'clases', label: 'Clases', icon: GraduationCap, route: '/clases', table: 'tutoring_listings', createRoute: '/clases/nuevo' },
@@ -105,6 +105,7 @@ function useTabData(tabId: TabId) {
     },
     enabled: !!tableName,
     staleTime: 1000 * 60 * 2, // 2 minutes
+    retry: false, // Don't retry so it falls back to mock data instantly if the table is missing
   });
 }
 
@@ -317,7 +318,7 @@ export function HomePage() {
                   {isLoading ? (
                     <LoadingSkeleton />
                   ) : (
-                    <TabContent tabId={activeTab} data={displayData} />
+                    <TabContent tabId={activeTab} data={displayData} navigate={navigate} />
                   )}
                 </motion.div>
               </AnimatePresence>
@@ -403,7 +404,7 @@ export function HomePage() {
 // ============================================
 // Tab Content Renderer
 // ============================================
-function TabContent({ tabId, data }: { tabId: TabId; data: unknown[] }) {
+function TabContent({ tabId, data, navigate }: { tabId: TabId; data: unknown[]; navigate: (path: string) => void }) {
   if (tabId === 'ingresantes' || tabId === 'calendario') {
     return <ComingSoonContent tabId={tabId} />;
   }
@@ -430,6 +431,20 @@ function TabContent({ tabId, data }: { tabId: TabId; data: unknown[] }) {
             visible: { opacity: 1, y: 0, scale: 1 },
           }}
           transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+          onClick={() => {
+            const id = (item as { id?: string }).id;
+            if (!id) return;
+            const routes: Record<string, string> = {
+              alquileres: `/alquileres/${id}`,
+              marketplace: `/marketplace/${id}`,
+              foro: `/foro/${id}`,
+              eventos: `/eventos/${id}`,
+              perdidos: `/perdidos/${id}`,
+              servicios: `/servicios/${id}`,
+              clases: `/clases/${id}`,
+            };
+            if (routes[tabId]) navigate(routes[tabId]);
+          }}
         >
           {renderCard(tabId, item)}
         </motion.div>

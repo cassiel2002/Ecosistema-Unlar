@@ -9,6 +9,7 @@ export interface UserProfile {
   avatar_url: string | null;
   career_id: string | null;
   enrollment_year: number | null;
+  matricula: string | null;
   bio: string | null;
   contact_phone: string | null;
   contact_instagram: string | null;

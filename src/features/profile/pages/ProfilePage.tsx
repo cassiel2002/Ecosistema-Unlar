@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Settings, Heart, MapPin, Calendar, Briefcase } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Settings, Heart, MapPin, Calendar, Briefcase, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { motion } from 'framer-motion';
@@ -18,6 +18,7 @@ import type { UserProfile, BaseListing } from '@/shared/types';
 export function ProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, profile: currentProfile } = useAuth();
 
   // If no id param, show current user's profile
@@ -84,6 +85,19 @@ export function ProfilePage() {
     },
     enabled: !!profileId,
   });
+
+  const handleDeleteListing = async (e: React.MouseEvent, listingId: string, module: string) => {
+    e.stopPropagation();
+    if (!window.confirm('¿Seguro que querés eliminar esta publicación? No vas a poder recuperarla.')) return;
+    
+    const { error } = await supabase.from(module).delete().eq('id', listingId);
+    if (!error) {
+      queryClient.invalidateQueries({ queryKey: ['user-listings', profileId] });
+    } else {
+      alert('Error al eliminar la publicación.');
+      console.error(error);
+    }
+  };
 
   const displayProfile = isOwnProfile ? (currentProfile ?? profile) : profile;
 
@@ -196,10 +210,17 @@ export function ProfilePage() {
               <span>Ingreso {displayProfile.enrollment_year}</span>
             </div>
           )}
+          {displayProfile.matricula && (
+            <div className="flex items-center gap-1.5">
+              <Badge variant="info" size="sm">
+                Matrícula: {displayProfile.matricula}
+              </Badge>
+            </div>
+          )}
           <div className="flex items-center gap-1.5">
             <MapPin className="h-4 w-4" />
             <span>
-              Miembro desde {format(new Date(displayProfile.created_at), 'MMMM yyyy', { locale: es })}
+              Miembro desde {displayProfile.created_at ? format(new Date(displayProfile.created_at), 'MMMM yyyy', { locale: es }) : 'Reciente'}
             </span>
           </div>
         </div>
@@ -241,9 +262,22 @@ export function ProfilePage() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.03 }}
-                className="flex items-center gap-3 rounded-lg border border-gray-100 p-3 dark:border-gray-800"
+                onClick={() => {
+                  const routes: Record<string, string> = {
+                    rentals: 'alquileres',
+                    marketplace_items: 'marketplace',
+                    forum_posts: 'foro',
+                    events: 'eventos',
+                    lost_found_items: 'perdidos',
+                    services: 'servicios',
+                    tutoring_listings: 'clases',
+                  };
+                  const route = routes[listing.module];
+                  if (route) navigate(`/${route}/${listing.id}`);
+                }}
+                className="flex items-center gap-3 rounded-lg border border-gray-100 p-3 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
               >
-                {listing.image_urls[0] ? (
+                {listing.image_urls && listing.image_urls[0] ? (
                   <img
                     src={listing.image_urls[0]}
                     alt={listing.title}
@@ -259,9 +293,18 @@ export function ProfilePage() {
                     {listing.title}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {format(new Date(listing.created_at), "d 'de' MMMM", { locale: es })}
+                    {listing.created_at ? format(new Date(listing.created_at), "d 'de' MMMM", { locale: es }) : ''}
                   </p>
                 </div>
+                {isOwnProfile && (
+                  <button
+                    onClick={(e) => handleDeleteListing(e, listing.id, (listing as any).module)}
+                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors ml-2"
+                    title="Eliminar publicación"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
               </motion.div>
             ))}
           </div>

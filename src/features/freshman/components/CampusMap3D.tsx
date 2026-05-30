@@ -420,62 +420,6 @@ const getPinColor = (type: HotspotPin['type']) => {
   }
 };
 
-// Helper to get hex colors for Three.js WebGL sprites
-const getPinHexColor = (type: HotspotPin['type']) => {
-  switch (type) {
-    case 'numeric':
-      return '#f59e0b'; // Amber-500
-    case 'letter':
-      return '#2563eb'; // Blue-600 (Primary)
-    case 'entrance':
-      return '#0ea5e9'; // Sky-500
-    case 'parking':
-      return '#4b5563'; // Gray-600
-    case 'sports':
-      return '#059669'; // Emerald-600
-    default:
-      return '#2563eb';
-  }
-};
-
-// Helper to generate a round CanvasTexture with building label inside
-function createPinTexture(label: string, colorHex: string) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 64;
-  canvas.height = 64;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-
-  ctx.clearRect(0, 0, 64, 64);
-
-  // Outer glowing ring
-  ctx.beginPath();
-  ctx.arc(32, 32, 29, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-  ctx.fill();
-
-  // Circle background matching category color
-  ctx.beginPath();
-  ctx.arc(32, 32, 23, 0, Math.PI * 2);
-  ctx.fillStyle = colorHex;
-  ctx.fill();
-  
-  // White border
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = '#ffffff';
-  ctx.stroke();
-
-  // Draw text label
-  ctx.font = 'bold 22px monospace';
-  ctx.fillStyle = '#ffffff';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(label, 32, 32);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  return texture;
-}
-
 export function CampusMap3D({ compact = false }: { compact?: boolean }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -611,74 +555,8 @@ export function CampusMap3D({ compact = false }: { compact?: boolean }) {
     raycasterRef.current = raycaster;
     mouseRef.current = mouse;
 
-    // 6b. Static WebGL Pins Group
-    const pinSprites: THREE.Sprite[] = [];
-    const pinGroup = new THREE.Group();
-    scene.add(pinGroup);
-
-    CAMPUS_PINS.forEach((pin) => {
-      const colorHex = getPinHexColor(pin.type);
-      const texture = createPinTexture(pin.label, colorHex);
-      if (!texture) return;
-
-      const material = new (THREE as any).SpriteMaterial({
-        map: texture,
-        depthTest: false, // Pins are always drawn on top of buildings
-        sizeAttenuation: true,
-      });
-
-      const sprite = new (THREE as any).Sprite(material);
-      // Position slightly above building heights
-      const pinHeight = pin.type === 'entrance' || pin.type === 'parking' || pin.type === 'sports' ? 1.0 : 2.5;
-      sprite.position.set(pin.x, pin.y + pinHeight, pin.z);
-      sprite.scale.set(2.2, 2.2, 1.0);
-      (sprite as any).userData = { pin };
-
-      pinGroup.add(sprite);
-      pinSprites.push(sprite);
-    });
-
-    // Raycast interaction event listeners on the canvas
-    const handleCanvasClick = (e: MouseEvent) => {
-      if (mapModeRef.current === '2d') return;
-      if (!cameraRef.current || !rendererRef.current) return;
-
-      const rect = rendererRef.current.domElement.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-      mouse.set(x, y);
-      raycaster.setFromCamera(mouse, cameraRef.current);
-
-      const intersects = raycaster.intersectObjects(pinSprites);
-      if (intersects.length > 0) {
-        const clickedSprite = intersects[0].object as THREE.Sprite;
-        const pin = (clickedSprite as any).userData.pin as HotspotPin;
-        handleFocusPin(pin);
-      }
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (mapModeRef.current === '2d') return;
-      if (!cameraRef.current || !rendererRef.current) return;
-
-      const rect = rendererRef.current.domElement.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-      mouse.set(x, y);
-      raycaster.setFromCamera(mouse, cameraRef.current);
-
-      const intersects = raycaster.intersectObjects(pinSprites);
-      if (intersects.length > 0) {
-        rendererRef.current.domElement.style.cursor = 'pointer';
-      } else {
-        rendererRef.current.domElement.style.cursor = 'grab';
-      }
-    };
-
-    renderer.domElement.addEventListener('click', handleCanvasClick);
-    renderer.domElement.addEventListener('mousemove', handleMouseMove);
+    // 6b. Static WebGL Pins Group (Removed as per request)
+    // Pins are now only accessible via the sidebar UI list.
 
     // 7. GLB Model Loading
     const loader = new GLTFLoader();
@@ -758,19 +636,7 @@ export function CampusMap3D({ compact = false }: { compact?: boolean }) {
         }
       }
 
-      // Pulse animation and scaling for static pin sprites
-      pinSprites.forEach((sprite) => {
-        const pin = (sprite as any).userData.pin as HotspotPin;
-        const isSelected = selectedPinRef.current?.id === pin.id;
-
-        const time = Date.now() * 0.003;
-        const scaleFactor = isSelected ? 2.8 + Math.sin(time) * 0.35 : 2.2;
-        sprite.scale.set(scaleFactor, scaleFactor, 1.0);
-
-        // Highlight selected pin material color
-        const mat = sprite.material as THREE.SpriteMaterial;
-        mat.color.setHex(isSelected ? 0xffffff : 0xdddddd);
-      });
+      // (Pulse animation and scaling for static pin sprites removed)
 
       if (controlsRef.current) {
         controlsRef.current.update();
@@ -802,19 +668,14 @@ export function CampusMap3D({ compact = false }: { compact?: boolean }) {
       cancelAnimationFrame(animationFrameId);
 
       if (rendererRef.current && rendererRef.current.domElement) {
-        rendererRef.current.domElement.removeEventListener('click', handleCanvasClick);
-        rendererRef.current.domElement.removeEventListener('mousemove', handleMouseMove);
+        // Event listeners removed
       }
 
       if (mountRef.current && renderer.domElement) {
         mountRef.current.removeChild(renderer.domElement);
       }
 
-      // Dispose of static pin textures and materials to prevent WebGL leaks
-      pinSprites.forEach((sprite) => {
-        sprite.material.map?.dispose();
-        sprite.material.dispose();
-      });
+      // (Dispose of static pin textures removed)
 
       // Dispose Three.js objects
       renderer.dispose();

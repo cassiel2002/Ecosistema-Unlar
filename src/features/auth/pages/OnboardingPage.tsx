@@ -108,6 +108,7 @@ export function OnboardingPage() {
       full_name: data.full_name,
       career_id: data.career_id,
       enrollment_year: data.enrollment_year,
+      matricula: data.matricula || null,
       avatar_url: user.user_metadata?.avatar_url || null,
     });
 

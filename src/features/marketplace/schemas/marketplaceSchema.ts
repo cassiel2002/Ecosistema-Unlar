@@ -10,10 +10,10 @@ export const marketplaceSchema = z.object({
     .min(10, 'La descripción debe tener al menos 10 caracteres')
     .max(2000, 'La descripción no puede superar los 2000 caracteres'),
   category: z.enum(['notes', 'electronics', 'furniture', 'books', 'bikes', 'other'], {
-    required_error: 'Seleccioná una categoría',
+    message: 'Seleccioná una categoría',
   }),
   condition: z.enum(['new', 'like_new', 'good', 'fair'], {
-    required_error: 'Seleccioná el estado del producto',
+    message: 'Seleccioná el estado del producto',
   }),
   is_free: z.boolean().default(false),
   price: z
@@ -23,8 +23,7 @@ export const marketplaceSchema = z.object({
     .default(null),
   image_urls: z
     .array(z.string().url())
-    .max(6, 'Máximo 6 imágenes')
-    .default([]),
+    .max(6, 'Máximo 6 imágenes'),
   contact_phone: z.string().optional().nullable(),
 }).refine(
   (data) => data.is_free || (data.price !== null && data.price > 0),

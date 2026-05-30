@@ -80,10 +80,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     );
 
-    // Fail-safe timeout: Force isLoading to false after 3 seconds if Supabase hangs
+    // Fail-safe timeout: Force isLoading to false after 10 seconds if Supabase hangs
     const timeoutId = setTimeout(() => {
       setIsLoading(false);
-    }, 3000);
+    }, 10000);
 
     return () => {
       subscription.unsubscribe();
