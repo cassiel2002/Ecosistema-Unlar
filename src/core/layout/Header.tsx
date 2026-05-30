@@ -191,7 +191,7 @@ export function Header() {
                     signOut().catch(console.error);
 
                     // Hard redirect
-                    window.location.href = '/auth/login';
+                    window.location.href = `${import.meta.env.BASE_URL}auth/login`;
                   }}
                   type="button"
                   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-800"

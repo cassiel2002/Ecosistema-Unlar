@@ -96,7 +96,10 @@ export function CreateServicePage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, (validationErrors) => {
+        const firstError = Object.values(validationErrors)[0];
+        toast.error(firstError?.message?.toString() || 'Revisá los campos del formulario');
+      })} className="space-y-6">
         {/* Images */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">

@@ -21,18 +21,18 @@ const eventSchema = z.object({
     .min(20, 'La descripción debe tener al menos 20 caracteres')
     .max(3000, 'La descripción no puede superar los 3000 caracteres'),
   event_type: z.enum(['hackathon', 'talk', 'workshop', 'tournament', 'social', 'academic'], {
-    errorMap: () => ({ message: 'Seleccioná el tipo de evento' }),
+    message: 'Seleccioná el tipo de evento',
   }),
   start_date: z.string().min(1, 'Ingresá la fecha de inicio'),
-  end_date: z.string().nullable().optional(),
+  end_date: z.string().nullable().default(null),
   location: z
     .string()
     .min(3, 'Ingresá la ubicación')
     .max(200, 'La ubicación es demasiado larga'),
-  is_virtual: z.boolean().optional(),
-  virtual_link: z.string().url('Ingresá un link válido').nullable().optional(),
-  max_attendees: z.number().min(1).nullable().optional(),
-  registration_required: z.boolean().optional(),
+  is_virtual: z.boolean().default(false),
+  virtual_link: z.string().url('Ingresá un link válido').nullable().default(null),
+  max_attendees: z.number().min(1).nullable().default(null),
+  registration_required: z.boolean().default(true),
   organizer: z
     .string()
     .min(2, 'Ingresá el organizador')
@@ -40,7 +40,7 @@ const eventSchema = z.object({
   image_urls: z
     .array(z.string().url())
     .max(6, 'Máximo 6 imágenes')
-    .optional(),
+    .default([]),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -87,6 +87,9 @@ export function CreateEventPage() {
 
       await create({
         ...data,
+        end_date: data.end_date ?? null,
+        virtual_link: data.virtual_link ?? null,
+        max_attendees: data.max_attendees ?? null,
         image_urls: imageUrls,
         current_attendees: 0,
         status: 'active',
@@ -116,7 +119,10 @@ export function CreateEventPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, (validationErrors) => {
+        const firstError = Object.values(validationErrors)[0];
+        toast.error(firstError?.message?.toString() || 'Revisá los campos del formulario');
+      })} className="space-y-6">
         {/* Images */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">

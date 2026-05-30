@@ -73,7 +73,8 @@ export function CreateRentalPage() {
 
       await create({
         ...data,
-        image_urls: imageUrls,
+        available_from: data.available_from ?? null,
+        image_urls: data.image_urls ?? [],
         status: 'active',
         is_pinned: false,
       });
@@ -102,7 +103,10 @@ export function CreateRentalPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, (validationErrors) => {
+        const firstError = Object.values(validationErrors)[0];
+        toast.error(firstError?.message?.toString() || 'Revisá los campos del formulario');
+      })} className="space-y-6">
         {/* Images */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">

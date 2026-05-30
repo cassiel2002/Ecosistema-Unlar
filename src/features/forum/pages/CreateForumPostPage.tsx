@@ -57,13 +57,15 @@ export function CreateForumPostPage() {
     try {
       await create({
         ...data,
+        related_career_id: data.related_career_id ?? null,
+        related_course: data.related_course ?? null,
+        image_urls: data.image_urls ?? [],
         upvotes: 0,
         downvotes: 0,
         comment_count: 0,
         is_answered: false,
         status: 'active',
         is_pinned: false,
-        image_urls: [],
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error al crear publicación');
@@ -89,7 +91,10 @@ export function CreateForumPostPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, (validationErrors) => {
+        const firstError = Object.values(validationErrors)[0];
+        toast.error(firstError?.message?.toString() || 'Revisá los campos del formulario');
+      })} className="space-y-6">
         {/* Category */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">

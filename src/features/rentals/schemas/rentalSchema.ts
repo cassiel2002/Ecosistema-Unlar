@@ -27,13 +27,12 @@ export const rentalSchema = z.object({
     .min(2, 'Ingresá el barrio')
     .max(100, 'El barrio es demasiado largo'),
   amenities: z.array(z.string()).default([]),
-  available_from: z.string().nullable().default(null),
+  available_from: z.string().nullable(),
   allows_pets: z.boolean().default(false),
   gender_preference: z.enum(['any', 'male', 'female']).default('any'),
   image_urls: z
     .array(z.string().url())
-    .max(6, 'Máximo 6 imágenes')
-    .default([]),
+    .max(6, 'Máximo 6 imágenes'),
 });
 
 export type RentalFormData = z.infer<typeof rentalSchema>;

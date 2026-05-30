@@ -15,7 +15,7 @@ const UNLAR_BG = 'https://mediosrioja.com.ar/wp-content/uploads/2024/07/unlar-1.
 const onboardingSchema = z.object({
   full_name: z.string().min(2, 'Mínimo 2 caracteres').max(100),
   dni: z.string().min(7, 'DNI inválido').max(10),
-  matricula: z.string().min(4, 'Matrícula inválida'),
+  matricula: z.string().optional().or(z.literal('')),
   career_id: z.string().min(1, 'Seleccioná una carrera'),
   enrollment_year: z.number().min(2000).max(new Date().getFullYear()),
 });
@@ -54,14 +54,25 @@ export function OnboardingPage() {
   });
 
   useEffect(() => {
-    supabase
-      .from('careers')
-      .select('*')
-      .order('name')
-      .then(({ data }) => {
+    const fetchCareers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('careers')
+          .select('*')
+          .order('name');
+          
+        if (error) {
+          console.error("Error al cargar carreras:", error);
+        }
         if (data) setCareers(data as Career[]);
+      } catch (err) {
+        console.error("Error de red al cargar carreras:", err);
+      } finally {
         setLoadingCareers(false);
-      });
+      }
+    };
+    
+    fetchCareers();
   }, []);
 
   // Close dropdown on outside click
@@ -91,7 +102,7 @@ export function OnboardingPage() {
     setValidationError(null);
     setIsSubmitting(true);
 
-    const { error } = await (supabase.from('user_profiles') as any).insert({
+    const { error } = await (supabase.from('user_profiles') as any).upsert({
       id: user.id,
       email: user.email!,
       full_name: data.full_name,
@@ -103,6 +114,9 @@ export function OnboardingPage() {
     if (!error) {
       await refreshProfile();
       navigate('/', { replace: true });
+    } else {
+      console.error("Error al guardar perfil:", error);
+      setValidationError("Error al guardar el perfil: " + error.message);
     }
     setIsSubmitting(false);
   };
@@ -119,7 +133,7 @@ export function OnboardingPage() {
     signOut().catch(console.error);
 
     // Hard redirect
-    window.location.href = '/auth/login';
+    window.location.href = `${import.meta.env.BASE_URL}auth/login`;
   };
 
   return (

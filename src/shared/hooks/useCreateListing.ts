@@ -96,7 +96,8 @@ export function useCreateListing<T extends BaseListing>(
           });
 
         if (uploadError) {
-          throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
+          console.error(`[useCreateListing] Upload failed for '${file.name}':`, uploadError);
+          throw new Error(`Error al subir ${file.name}: ${uploadError.message}`);
         }
 
         const { data: urlData } = supabase.storage
@@ -145,7 +146,9 @@ export function useCreateListing<T extends BaseListing>(
         .single();
 
       if (insertError) {
-        throw new Error(insertError.message);
+        console.error(`[useCreateListing] INSERT into '${table}' failed:`, insertError);
+        console.error('[useCreateListing] Record attempted:', JSON.stringify(record, null, 2));
+        throw new Error(`Error al publicar: ${insertError.message} (code: ${insertError.code})`);
       }
 
       recordCreation();

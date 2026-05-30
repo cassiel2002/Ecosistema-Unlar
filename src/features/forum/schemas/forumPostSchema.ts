@@ -16,12 +16,11 @@ export const forumPostSchema = z.object({
     .array(z.string().min(1).max(30))
     .min(1, 'Agregá al menos un tag')
     .max(5, 'Máximo 5 tags'),
-  related_career_id: z.string().nullable().default(null),
-  related_course: z.string().max(100).nullable().default(null),
+  related_career_id: z.string().nullable(),
+  related_course: z.string().max(100).nullable(),
   image_urls: z
     .array(z.string().url())
-    .max(6, 'Máximo 6 imágenes')
-    .default([]),
+    .max(6, 'Máximo 6 imágenes'),
 });
 
 export type ForumPostFormData = z.infer<typeof forumPostSchema>;
