@@ -1,0 +1,26 @@
+============================================
+VARIABLES DE ENTORNO PARA RAILWAY
+============================================
+
+Copia y pega estas variables en Railway Dashboard:
+Settings → Variables → Raw Editor
+
+--------------------------------------------
+
+SPRING_PROFILES_ACTIVE=prod
+SPRING_DATASOURCE_URL=jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
+SPRING_DATASOURCE_USERNAME=postgres.izameyyymxdlosrdllbb
+SPRING_DATASOURCE_PASSWORD=enzocassielfacundo
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+SPRING_JPA_HIBERNATE_DDL_AUTO=none
+SPRING_JPA_SHOW_SQL=false
+LOGGING_LEVEL_ROOT=INFO
+LOGGING_LEVEL_COM_UNLAR_ECOSISTEMA=INFO
+
+--------------------------------------------
+
+IMPORTANTE:
+- Cuando despliegues el frontend, actualiza CORS_ALLOWED_ORIGINS
+- Ejemplo: CORS_ALLOWED_ORIGINS=http://localhost:5173,https://tu-frontend.vercel.app
+
+============================================
