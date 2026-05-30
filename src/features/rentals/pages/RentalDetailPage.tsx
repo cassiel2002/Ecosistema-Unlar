@@ -47,6 +47,13 @@ export function RentalDetailPage() {
   const { data: rental, isLoading } = useQuery({
     queryKey: ['rental', id],
     queryFn: async () => {
+      // Fallback para datos de prueba (mock)
+      if (id?.startsWith('mock-')) {
+        const { mockRentals } = await import('@/shared/constants/mockData');
+        const mock = mockRentals.find(r => r.id === id);
+        if (mock) return mock as Rental;
+      }
+
       const { data, error } = await supabase
         .from('rentals')
         .select('*, author:user_profiles!author_id(*)')
@@ -57,6 +64,7 @@ export function RentalDetailPage() {
       return data as Rental;
     },
     enabled: !!id,
+    retry: false,
   });
 
   const handleDelete = async () => {

@@ -35,6 +35,13 @@ export function LostFoundDetailPage() {
   const { data: item, isLoading } = useQuery({
     queryKey: ['lost-found-item', id],
     queryFn: async () => {
+      // Fallback para datos de prueba (mock)
+      if (id?.startsWith('mock-')) {
+        const { mockLostFound } = await import('@/shared/constants/mockData');
+        const mock = mockLostFound.find(i => i.id === id);
+        if (mock) return mock as LostFoundItem;
+      }
+
       const { data, error } = await supabase
         .from('lost_found_items')
         .select('*, author:user_profiles!author_id(*)')
@@ -45,6 +52,7 @@ export function LostFoundDetailPage() {
       return data as LostFoundItem;
     },
     enabled: !!id,
+    retry: false,
   });
 
   const resolveMutation = useMutation({

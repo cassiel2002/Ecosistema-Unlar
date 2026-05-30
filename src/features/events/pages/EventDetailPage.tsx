@@ -35,6 +35,13 @@ export function EventDetailPage() {
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', id],
     queryFn: async () => {
+      // Fallback para datos de prueba (mock)
+      if (id?.startsWith('mock-')) {
+        const { mockEvents } = await import('@/shared/constants/mockData');
+        const mock = mockEvents.find(e => e.id === id);
+        if (mock) return mock as Event;
+      }
+
       const { data, error } = await supabase
         .from('events')
         .select('*, author:user_profiles!author_id(*)')
@@ -45,6 +52,7 @@ export function EventDetailPage() {
       return data as Event;
     },
     enabled: !!id,
+    retry: false,
   });
 
   const {

@@ -43,6 +43,13 @@ export function TutoringDetailPage() {
   const { data: listing, isLoading } = useQuery({
     queryKey: ['tutoring', id],
     queryFn: async () => {
+      // Fallback para datos de prueba (mock)
+      if (id?.startsWith('mock-')) {
+        const { mockTutoring } = await import('@/shared/constants/mockData');
+        const mock = mockTutoring.find(t => t.id === id);
+        if (mock) return mock as TutoringListing;
+      }
+
       const { data, error } = await supabase
         .from('tutoring_listings')
         .select('*, author:user_profiles!author_id(*)')
@@ -53,6 +60,7 @@ export function TutoringDetailPage() {
       return data as TutoringListing;
     },
     enabled: !!id,
+    retry: false,
   });
 
   const handleDelete = async () => {

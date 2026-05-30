@@ -57,6 +57,13 @@ export function MarketplaceDetailPage() {
   const { data: item, isLoading } = useQuery({
     queryKey: ['marketplace-item', id],
     queryFn: async () => {
+      // Fallback para datos de prueba (mock)
+      if (id?.startsWith('mock-')) {
+        const { mockMarketplaceItems } = await import('@/shared/constants/mockData');
+        const mock = mockMarketplaceItems.find(m => m.id === id);
+        if (mock) return mock as MarketplaceItem;
+      }
+
       const { data, error } = await supabase
         .from('marketplace_items')
         .select('*, author:user_profiles!author_id(*)')
@@ -67,6 +74,7 @@ export function MarketplaceDetailPage() {
       return data as MarketplaceItem;
     },
     enabled: !!id,
+    retry: false,
   });
 
   const handleDelete = async () => {

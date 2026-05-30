@@ -41,6 +41,13 @@ export function ServiceDetailPage() {
   const { data: service, isLoading } = useQuery({
     queryKey: ['service', id],
     queryFn: async () => {
+      // Fallback para datos de prueba (mock)
+      if (id?.startsWith('mock-')) {
+        const { mockServices } = await import('@/shared/constants/mockData');
+        const mock = mockServices.find(s => s.id === id);
+        if (mock) return mock as Service;
+      }
+
       const { data, error } = await supabase
         .from('services')
         .select('*, author:user_profiles!author_id(*)')
@@ -51,6 +58,7 @@ export function ServiceDetailPage() {
       return data as Service;
     },
     enabled: !!id,
+    retry: false,
   });
 
   const handleDelete = async () => {

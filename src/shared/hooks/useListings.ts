@@ -102,7 +102,8 @@ async function fetchListingsPage<T extends BaseListing>(
   const { data, error, count } = await query;
 
   if (error) {
-    throw new Error(error.message);
+    console.error(`Error fetching ${table}:`, error);
+    return { items: [], totalCount: 0, nextPage: null };
   }
 
   const totalCount = count ?? 0;

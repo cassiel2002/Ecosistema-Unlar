@@ -35,6 +35,13 @@ export function ForumPostPage() {
   const { data: post, isLoading } = useQuery({
     queryKey: ['forum-post', id],
     queryFn: async () => {
+      // Fallback para datos de prueba (mock)
+      if (id?.startsWith('mock-')) {
+        const { mockForumPosts } = await import('@/shared/constants/mockData');
+        const mock = mockForumPosts.find(p => p.id === id);
+        if (mock) return mock as ForumPost;
+      }
+
       const { data, error } = await supabase
         .from('forum_posts')
         .select('*, author:user_profiles!author_id(*)')
@@ -45,6 +52,7 @@ export function ForumPostPage() {
       return data as ForumPost;
     },
     enabled: !!id,
+    retry: false,
   });
 
   const handleDelete = async () => {

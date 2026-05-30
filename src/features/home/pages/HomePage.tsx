@@ -100,7 +100,10 @@ function useTabData(tabId: TabId) {
         .order('created_at', { ascending: false })
         .limit(6);
 
-      if (error) throw error;
+      if (error) {
+        console.error(`Error fetching ${tableName}:`, error);
+        return []; // Return empty array on error so it falls back to mock data instantly
+      }
       return data || [];
     },
     enabled: !!tableName,
